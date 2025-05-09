@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>录入造价指标</title>
+    <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
+    <style>
+        .tree ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .tree ul ul {
+            margin-left: 20px;
+        }
+        .leaf {
+            margin: 5px 0;
+        }
+        .inactive {
+            color: gray;
+            transition: color 0.3s ease;
+        }
+        .tree li {
+            margin-bottom: 5px;
+        }
+
+        .tree input[type="text"] {
+            margin-left: 10px;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #f0f0f0;
+            color: #000;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            left: 105%;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        #success-message {
+            display: none;
+            color: green;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>请录入造价指标</h1>
+    <form method="post" id="unitIndicatorForm" action="/enter_unit_indicator/{{ project_id }}">
+        <label for="version_name">请选择您要录入的数据版本：</label>
+        <select id="version_name" name="version_name" required>
+            {% for version in versions %}
+            <option value="{{ version.version_id }}" {% if version.version_id|string == selected_version|string %}selected{% endif %}>{{ version.version_name }}</option>
+            {% endfor %}
+        </select>
+        <div id="categoryTree" class="tree"></div> <!-- 添加了显示框 -->
+        <input type="submit" value="提交数据">
+    </form>
+    <div id="success-message">数据已成功保存。</div>
+
+    <script>
+        $(document).ready(function() {
+            // 获取初始数据并构建树形结构
+            let categories = {{ categories|tojson|safe }};
+            console.log('Categories:', categories);  // 输出调试信息
+            buildTree(categories, $('#categoryTree'));
+        });
+
+        $('#version_name').change(function() {
+            let selectedVersion = $(this).val(); // 获取选中的版本
+            let currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('version_name', selectedVersion); // 更新 URL 参数
+            window.location.href = currentUrl.toString();
+        });
+
+        function buildTree(categories, parentElement) {
+            let ul = $('<ul>');
+            categories.forEach(function(category) {
+                console.log('Category:', category); // 输出调试信息
+                let li = $('<li>').text(category.category_name);
+                ul.append(li);
+                if (category.children) {
+                    buildTree(category.children, li);
+                } else {
+                    let tooltip = $("<span class='tooltip'>");
+                    let input = $("<input type='text' name='category_" + category.category_id + "'>");
+                    input.attr('data-category-name', category.category_name);
+                    let tooltipText = $("<span class='tooltiptext'>").text("输入" + (category.indicator_base_name || 'N/A') + "造价指标");
+
+                    input.attr('data-original-value', category.unit_indicator || '');
+                    if (category.unit_indicator) {
+                        input.val(category.unit_indicator);
+                        input.addClass('inactive');
+                    }
+                    input.data('modified', 'false');
+
+                    input.on('focus', function() {
+                        if ($(this).data('modified') === 'false') {
+                            $(this).val('');
+                        }
+                    });
+                    input.on('input', function() {
+                        $(this).data('modified', 'true');
+                        $(this).removeClass('inactive');
+                    });
+                    input.on('blur', function() {
+                        if ($(this).data('modified') === 'false' && $(this).val() === '') {
+                            $(this).val($(this).data('original-value'));
+                            $(this).addClass('inactive');
+                        }
+                    });
+
+                    tooltip.append(input);
+                    tooltip.append(tooltipText);
+                    li.append(tooltip);
+                }
+            });
+            parentElement.append(ul);
+        }
+
+        $('#unitIndicatorForm').on('submit', function (e) {
+            e.preventDefault();
+            let formData = $(this).serializeArray();
+            let project_id = {{ project_id }};
+            let data = {};
+
+            formData.forEach(function (item) {
+                if (item.name === 'version_name') {
+                    data['version_id'] = item.value;  // 保存版本 ID
+                } else {
+                    let category_id_match = item.name.match(/^category_(\d+)$/);
+                    if (category_id_match) {
+                        let category_id = category_id_match[1];
+                        data[category_id] = {
+                            unit_indicator: item.value,
+                            category_name: $("input[name='" + item.name + "']").data('category-name') // 保存 category_name
+                        };
+                    } else {
+                        data[item.name] = item.value;                
+                    }
+                }
+            });
+
+            // console.log(data); // 调试信息，查看数据是否合法
+
+            $.ajax({
+                url: `/submit_unit_indicator/${project_id}`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (response.redirect) {
+                        window.location.href = response.redirect;
+                    } else {
+                        alert('数据保存成功');
+                    }
+                },
+                error: function(xhr) {
+                    alert('提交出现错误: ' + xhr.responseText);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

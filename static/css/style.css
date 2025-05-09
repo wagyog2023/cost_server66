@@ -1,0 +1,425 @@
+/* 通用样式 */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: #f8f9fa;
+  color: #1a1a1a;
+  line-height: 1.5;
+}
+
+/* 页面容器 */
+.page-container {
+  max-width: 98%;
+  margin: 1rem auto;
+  padding: 0 0.5rem;
+}
+
+/* 卡片样式 */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+/* 表格美化 */
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  table-layout: auto;
+  min-width: auto;
+  font-size: 0.875rem;
+}
+
+.data-table th {
+  background: #f8f9fa;
+  padding: 1rem;
+  font-weight: 500;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  text-align: left;
+}
+
+.data-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* 表单控件美化 */
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.form-control:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  outline: none;
+}
+
+/* 按钮样式 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #4b5563;
+}
+
+.btn-tertiary:hover {
+  background-color: #17a2b8;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+/* 页面标题 */
+.page-title {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* 操作按钮组 */
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* 表单布局 */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+/* 项目表格的列宽设置 */
+#projects_table th,
+#projects_table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 4px 2px;
+}
+
+/* 项目名称列 */
+#projects_table th:nth-child(1),
+#projects_table td:nth-child(1) {
+  min-width: 160px;
+  max-width: 200px;
+}
+
+/* 开工日期列 */
+#projects_table th:nth-child(2),
+#projects_table td:nth-child(2) {
+  min-width: 100px;
+  max-width: 120px;
+}
+
+/* 项目城市列 */
+#projects_table th:nth-child(3),
+#projects_table td:nth-child(3) {
+  min-width: 90px;
+  max-width: 120px;
+}
+
+/* 项目地址列 */
+#projects_table th:nth-child(4),
+#projects_table td:nth-child(4) {
+  min-width: 200px;
+  max-width: 300px;
+}
+
+/* 开发商名称列 */
+#projects_table th:nth-child(5),
+#projects_table td:nth-child(5) {
+  min-width: 150px;
+  max-width: 200px;
+}
+
+/* 数字类列（建筑面积等） */
+#projects_table th:nth-child(6),
+#projects_table td:nth-child(6),
+#projects_table th:nth-child(7),
+#projects_table td:nth-child(7),
+#projects_table th:nth-child(8),
+#projects_table td:nth-child(8),
+#projects_table th:nth-child(9),
+#projects_table td:nth-child(9),
+#projects_table th:nth-child(10),
+#projects_table td:nth-child(10) {
+  min-width: 100px;
+  max-width: 120px;
+  text-align: right;
+}
+
+/* 项目类型列 */
+#projects_table th:nth-child(11),
+#projects_table td:nth-child(11) {
+  min-width: 100px;
+  max-width: 120px;
+}
+
+/* 版本列 */
+#projects_table th:nth-child(12),
+#projects_table td:nth-child(12) {
+  min-width: 80px;
+  max-width: 100px;
+}
+
+/* 操作列 */
+#projects_table th:nth-child(13),
+#projects_table td:nth-child(13) {
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+/* 输入框样式优化 */
+#projects_table input,
+#projects_table select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+/* 编辑状态下的单元格样式 */
+#projects_table td span {
+  display: block;
+  padding: 0.5rem 0;
+}
+
+/* 确保编辑按钮组样式统一 */
+#projects_table .edit_btn,
+#projects_table .save_btn,
+#projects_table .cancel_btn {
+  padding: 0.25rem 0.5rem;
+  margin: 0 0.25rem;
+  font-size: 0.875rem;
+  border-radius: 4px;
+}
+
+/* 响应式处理 */
+@media (max-width: 1500px) {
+  .card {
+    margin: 0 -1rem;
+  }
+  
+  .data-table {
+    font-size: 0.875rem;
+  }
+}
+
+/* 项目表格列宽优化 */
+#projects_table {
+  table-layout: auto; /* 让表格根据内容自动调整列宽 */
+  width: 100%;
+  min-width: 1200px; /* 确保表格有最小宽度 */
+}
+
+/* 设置各列的宽度比例 */
+#projects_table th,
+#projects_table td {
+  padding: 4px 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 项目表格各列宽度定义 */
+#projects_table .project-name-width { width: 10%; }    /* 项目名称 */
+#projects_table .date-width { width: 7%; }            /* 开工日期 */
+#projects_table .city-width { width: 5%; }            /* 项目城市 */
+#projects_table .address-width { width: 12%; }        /* 项目地址 */
+#projects_table .developer-width { width: 10%; }      /* 开发商名称 */
+#projects_table .area-width { width: 4.5%; }          /* 建筑面积等数字列，从5%减至4.5% */
+#projects_table .type-width { width: 7%; }            /* 项目类型，从5%增至7% */
+#projects_table .version-width { width: 5%; }         /* 版本 */
+#projects_table .action-width { width: 6%; }          /* 操作按钮列 */
+
+/* 数字列右对齐 */
+#projects_table td:nth-child(6),
+#projects_table td:nth-child(7),
+#projects_table td:nth-child(8),
+#projects_table td:nth-child(9),
+#projects_table td:nth-child(10) {
+  text-align: right;
+  padding-right: 6px;
+  padding-left: 2px;
+}
+
+/* 确保输入框和下拉菜单样式统一 */
+#projects_table input[type="text"],
+#projects_table input[type="date"],
+#projects_table input[type="number"],
+#projects_table select {
+  width: 100%;
+  padding: 2px 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 0.875rem;
+}
+
+/* 响应式处理 */
+@media screen and (max-width: 1600px) {
+  .data-table {
+    font-size: 0.8125rem;
+  }
+  
+  #projects_table th,
+  #projects_table td {
+    padding: 3px 4px;
+  }
+}
+
+/* 项目类型列样式优化 */
+#projects_table td:nth-child(11) {
+  padding-left: 6px;
+}
+
+/* 编辑状态下的输入框样式优化 */
+#projects_table input[type="number"] {
+  text-align: right;
+  padding-right: 2px;
+  padding-left: 2px;
+}
+
+/* 表格基础样式优化 */
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;  /* 改为auto以允许浏览器根据内容自动调整列宽 */
+}
+
+/* 调整各列宽度比例 */
+#projects_table .project-name-width { 
+  min-width: 120px;  /* 项目名称最小宽度 */
+  max-width: 200px;  /* 项目名称最大宽度 */
+}
+#projects_table .date-width { 
+  width: 90px;      /* 开工日期固定宽度 */
+}
+#projects_table .city-width { 
+  width: 70px;      /* 项目城市固定宽度 */
+}
+#projects_table .address-width { 
+  min-width: 150px; /* 项目地址最小宽度 */
+  max-width: 250px; /* 项目地址最大宽度 */
+}
+#projects_table .developer-width { 
+  min-width: 120px; /* 开发商名称最小宽度 */
+  max-width: 200px; /* 开发商名称最大宽度 */
+}
+#projects_table .area-width { 
+  width: 85px;      /* 数字列固定宽度 */
+}
+#projects_table .type-width { 
+  width: 90px;      /* 项目类型固定宽度 */
+}
+#projects_table .version-width { 
+  width: 70px;      /* 版本固定宽度 */
+}
+#projects_table .action-width { 
+  width: 100px;     /* 操作按钮列固定宽度 */
+}
+
+/* 数字列样式优化 */
+#projects_table td:nth-child(6),
+#projects_table td:nth-child(7),
+#projects_table td:nth-child(8),
+#projects_table td:nth-child(9),
+#projects_table td:nth-child(10) {
+  text-align: right;
+  padding-right: 8px;  /* 增加右边距 */
+  padding-left: 4px;   /* 减小左边距 */
+  white-space: nowrap; /* 防止数字换行 */
+}
+
+/* 室外面积列（第10列）特殊处理 */
+#projects_table td:nth-child(10) {
+  padding-right: 12px;  /* 与项目类型列保持适当距离 */
+}
+
+/* 项目类型列样式优化 */
+#projects_table td:nth-child(11) {
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+/* 版本列样式优化 */
+#projects_table td:nth-child(12) {
+  padding-left: 6px;
+  white-space: nowrap;
+}
+
+/* 确保输入框和下拉菜单适应单元格宽度 */
+#projects_table input[type="text"],
+#projects_table input[type="date"],
+#projects_table input[type="number"],
+#projects_table select {
+  width: 100%;
+  box-sizing: border-box;
+}

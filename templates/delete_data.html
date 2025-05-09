@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>删除数据 - 项目管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .page-wrapper {
+            min-height: 100vh;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-section {
+            background: #fff;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+            color: #111827;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-btn {
+            color: #6b7280;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .tree-container {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .tree-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tree-title {
+            font-size: 1rem;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .tree-content {
+            padding: 1rem;
+        }
+
+        .project-tree {
+            list-style: none;
+            padding: 0;
+        }
+
+        .project-item {
+            margin-bottom: 0.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .project-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            cursor: pointer;
+            background: #fff;
+            transition: background-color 0.2s;
+        }
+
+        .project-content {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+            margin-right: 1rem;
+        }
+
+        .project-header:hover {
+            background: #f3f4f6;
+        }
+
+        .project-header.active {
+            background: #e5e7eb;
+            border-color: #d1d5db;
+        }
+
+        .action-btn {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .expand-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            color: #6b7280;
+            transition: transform 0.2s;
+        }
+
+        .project-item.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .project-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .project-name {
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .project-meta {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .buildings-list {
+            margin-left: 2.25rem;
+            padding-left: 1rem;
+            border-left: 1px solid #e5e7eb;
+            display: none;
+        }
+
+        .project-item.expanded .buildings-list {
+            display: block;
+        }
+
+        .building-item {
+            position: relative;
+            padding: 0.5rem 1rem;
+            margin-bottom: 0.5rem;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+        }
+
+        .building-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .building-name {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .building-meta {
+            color: #6b7280;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .delete-project {
+            color: #dc2626;
+            background: #fff;
+            border: 1px solid #dc2626;
+        }
+
+        .delete-project:hover {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .delete-building {
+            color: #6b7280;
+            background: #fff;
+            border: 1px solid #d1d5db;
+        }
+
+        .delete-building:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .empty-state {
+            padding: 3rem;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        .project-main-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .project-version {
+            font-size: 0.875rem;
+            color: #6b7280;
+            padding: 0.25rem 0.75rem;
+            background: #f3f4f6;
+            border-radius: 9999px;
+            white-space: nowrap;
+        }
+
+        .building-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            background: #fff;
+        }
+
+        .building-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .building-name {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .building-version {
+            font-size: 0.75rem;
+            color: #6b7280;
+            padding: 0.125rem 0.5rem;
+            background: #f3f4f6;
+            border-radius: 9999px;
+        }
+
+        .building-list {
+            display: none;
+            margin: 0;
+            padding: 0.5rem 0 0.5rem 3.5rem;
+            list-style: none;
+            position: relative;
+        }
+
+        .building-list::before {
+            content: '';
+            position: absolute;
+            left: 1.75rem;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: #e5e7eb;
+        }
+
+        .building-item::before {
+            content: '';
+            position: absolute;
+            left: -1.75rem;
+            top: 50%;
+            width: 1.5rem;
+            height: 1px;
+            background-color: #e5e7eb;
+        }
+
+        .project-item.expanded .building-list {
+            display: block;
+        }
+
+        .expand-icon {
+            margin-right: 0.75rem;
+            color: #6b7280;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease;
+        }
+
+        .project-item.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .project-tag {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="header-section">
+            <h1 class="page-title">
+                <i class="fas fa-trash-alt"></i>
+                数据管理
+            </h1>
+            <a href="/" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                返回首页
+            </a>
+        </header>
+
+        <main class="main-content">
+            <div class="tree-container">
+                <div class="tree-header">
+                    <h2 class="tree-title">项目结构</h2>
+                    <span class="project-count">{{ projects|length }}个项目</span>
+                </div>
+                <div class="tree-content">
+                    {% if projects %}
+                    <ul class="project-tree">
+                        {% for project in projects %}
+                        <li class="project-item" data-project-id="{{ project.project_id }}">
+                            <div class="project-header">
+                                <div class="project-content">
+                                    <span class="expand-icon">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </span>
+                                    <div class="project-info">
+                                        <div class="project-main-info">
+                                            <span class="project-name">{{ project.project_name }}</span>
+                                            <span class="project-version">{{ project.version_name or '无版本' }}</span>
+                                        </div>
+                                        <div class="project-meta">
+                                            <span class="meta-item">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                {{ project.project_city }}
+                                            </span>
+                                            <span class="meta-item">
+                                                <i class="fas fa-building"></i>
+                                                {{ project.project_developer }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="action-btn delete-project" onclick="deleteProject({{ project.project_id }}, event)">
+                                    <i class="fas fa-trash"></i>
+                                    删除项目
+                                </button>
+                            </div>
+                            <ul class="building-list">
+                                {% for building in project.buildings %}
+                                <li class="building-item" data-building-id="{{ building.building_id }}">
+                                    <div class="building-info">
+                                        <span class="building-name">{{ building.building_name }}</span>
+                                        <span class="building-version">{{ building.building_version_name or '无版本' }}</span>
+                                        <span class="building-area">{{ building.building_area }}㎡</span>
+                                    </div>
+                                    <button class="action-btn delete-building" onclick="deleteBuilding({{ building.building_id }}, event)">
+                                        <i class="fas fa-trash"></i>
+                                        删除楼宇
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <p>暂无项目数据</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="passwordModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>安全验证</h3>
+            <p>请输入当前账户密码以确认删除操作</p>
+            <input type="password" id="confirmPassword" class="form-control">
+            <div class="modal-actions">
+                <button onclick="closePasswordModal()">取消</button>
+                <button onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 项目展开/折叠功能
+        document.querySelectorAll('.project-header').forEach(header => {
+            header.addEventListener('click', function(e) {
+                // 如果点击的是删除按钮或者在密码验证模态框内，不触发展开/折叠
+                if (e.target.closest('.action-btn') || e.target.closest('.modal-content')) return;
+                
+                const projectItem = this.closest('.project-item');
+                projectItem.classList.toggle('expanded');
+                this.classList.toggle('active');
+            });
+        });
+
+        let currentDeleteAction = null;
+        let currentDeleteId = null;
+
+        function showPasswordModal(action, id) {
+            currentDeleteAction = action;
+            currentDeleteId = id;
+            document.getElementById('passwordModal').style.display = 'flex';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('confirmPassword').focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+            currentDeleteAction = null;
+            currentDeleteId = null;
+        }
+
+        function deleteProject(projectId, event) {
+            event.stopPropagation();
+            if (confirm('确定要删除该项目吗？这将同时删除项目下的所有楼宇和成本数据！')) {
+                showPasswordModal('project', projectId);
+            }
+        }
+
+        function deleteBuilding(buildingId, event) {
+            event.stopPropagation();
+            if (confirm('确定要删除该楼宇吗？')) {
+                showPasswordModal('building', buildingId);
+            }
+        }
+
+        function confirmDelete() {
+            const password = document.getElementById('confirmPassword').value;
+            if (!password) {
+                alert('请输入密码');
+                return;
+            }
+
+            const endpoint = currentDeleteAction === 'project' 
+                ? `/delete_project/${currentDeleteId}`
+                : `/delete_building/${currentDeleteId}`;
+
+            fetch(endpoint, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (currentDeleteAction === 'project') {
+                        const projectItem = document.querySelector(`.project-item[data-project-id="${currentDeleteId}"]`);
+                        if (projectItem) {
+                            projectItem.style.height = projectItem.offsetHeight + 'px';
+                            projectItem.style.transition = 'all 0.3s';
+                            setTimeout(() => {
+                                projectItem.style.height = '0';
+                                projectItem.style.opacity = '0';
+                                setTimeout(() => {
+                                    projectItem.remove();
+                                    updateProjectCount();
+                                    checkEmptyState();
+                                }, 300);
+                            }, 0);
+                        }
+                    } else {
+                        const buildingItem = document.querySelector(`.building-item[data-building-id="${currentDeleteId}"]`);
+                        if (buildingItem) {
+                            const projectItem = buildingItem.closest('.project-item');
+                            const buildingsList = buildingItem.closest('.buildings-list');
+                            
+                            buildingItem.style.height = buildingItem.offsetHeight + 'px';
+                            buildingItem.style.transition = 'all 0.3s';
+                            setTimeout(() => {
+                                buildingItem.style.height = '0';
+                                buildingItem.style.opacity = '0';
+                                setTimeout(() => {
+                                    buildingItem.remove();
+                                    
+                                    const remainingBuildings = buildingsList.querySelectorAll('.building-item').length;
+                                    if (remainingBuildings === 0) {
+                                        buildingsList.innerHTML = `
+                                            <div class="empty-state">
+                                                <i class="fas fa-building"></i>
+                                                <p>暂无楼宇数据</p>
+                                            </div>
+                                        `;
+                                    }
+                                    
+                                    const buildingCountElement = projectItem.querySelector('.building-count');
+                                    if (buildingCountElement) {
+                                        buildingCountElement.textContent = `${remainingBuildings}个楼宇`;
+                                    }
+                                }, 300);
+                            }, 0);
+                        }
+                    }
+                    closePasswordModal();
+                } else {
+                    alert('删除失败：' + (data.message || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('操作失败，请稍后重试');
+                closePasswordModal();
+            });
+        }
+
+        // 更新项目计数的函数
+        function updateProjectCount() {
+            const projectCount = document.querySelectorAll('.project-item').length;
+            const projectCountElement = document.querySelector('.project-count');
+            if (projectCountElement) {
+                projectCountElement.textContent = `${projectCount}个项目`;
+            }
+        }
+
+        // 检查是否需要显示空状态的函数
+        function checkEmptyState() {
+            const projectTree = document.querySelector('.project-tree');
+            const projectCount = document.querySelectorAll('.project-item').length;
+            
+            if (projectCount === 0) {
+                const emptyState = `
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <p>暂无项目数据</p>
+                    </div>
+                `;
+                projectTree.innerHTML = emptyState;
+            }
+        }
+
+        // 更新楼宇计数的函数
+        function updateBuildingCount(projectItem) {
+            if (projectItem) {
+                const buildingList = projectItem.querySelector('.building-list');
+                const buildingCount = buildingList.querySelectorAll('.building-item').length;
+                
+                // 如果该项目下没有楼宇了，可以添加提示
+                if (buildingCount === 0) {
+                    buildingList.innerHTML = `
+                        <li class="empty-building-list">
+                            <div class="empty-state">
+                                <i class="fas fa-building"></i>
+                                <p>暂无楼宇数据</p>
+                            </div>
+                        </li>
+                    `;
+                }
+            }
+        }
+
+        // 在页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProjectCount();
+            checkEmptyState();
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户操作日志 - 项目管理系统</title>
+    <style>
+        /* 使用与现有系统一致的样式 */
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #f8f9fa;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .back-btn {
+            margin-bottom: 20px;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .pagination-controls {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .pagination-info {
+            margin-bottom: 10px;
+        }
+        
+        .pagination {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .current-page {
+            padding: 5px 10px;
+            background: #fff;
+            border-radius: 4px;
+        }
+        
+        .btn {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+        }
+        
+        .btn:hover {
+            background: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="btn back-btn">返回首页</a>
+        <h1>用户操作日志</h1>
+
+        <div class="filter-section">
+            <form class="filter-form" method="get">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <select name="username" id="username">
+                        <option value="">全部用户</option>
+                        {% for username in usernames %}
+                        <option value="{{ username }}" {% if request.args.get('username') == username %}selected{% endif %}>
+                            {{ username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="start_date">开始日期</label>
+                    <input type="date" name="start_date" id="start_date" value="{{ request.args.get('start_date', '') }}">
+                </div>
+                <div class="form-group">
+                    <label for="end_date">结束日期</label>
+                    <input type="date" name="end_date" id="end_date" value="{{ request.args.get('end_date', '') }}">
+                </div>
+                <div class="form-group">
+                    <label for="action_type">操作类型</label>
+                    <select name="action_type" id="action_type">
+                        <option value="">全部操作</option>
+                        {% for action_type in action_types %}
+                        <option value="{{ action_type }}" {% if request.args.get('action_type') == action_type %}selected{% endif %}>
+                            {{ action_type }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="align-self: flex-end;">
+                    <button type="submit" class="btn">筛选</button>
+                </div>
+            </form>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>时间</th>
+                    <th>用户名</th>
+                    <th>IP地址</th>
+                    <th>操作类型</th>
+                    <th>模块</th>
+                    <th>数据ID</th>
+                    <th>详细信息</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.access_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ log.username }}</td>
+                    <td>{{ log.ip_address }}</td>
+                    <td>{{ log.action_type }}</td>
+                    <td>{{ log.module_name }}</td>
+                    <td>{{ log.data_id }}</td>
+                    <td>{{ log.action_detail }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="pagination-controls">
+            <div class="pagination-info">
+                总记录数: {{ total_records }} | 
+                {% if show_all == '1' %}
+                    显示全部记录
+                    <a href="{{ url_for('view_logs', page=1, per_page=30, username=request.args.get('username', ''), 
+                        start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', ''),
+                        action_type=request.args.get('action_type', ''), show_all=0) }}" 
+                        class="btn btn-secondary">显示最近30条</a>
+                {% else %}
+                    当前显示: {{ current_page_start }} - {{ current_page_end }}
+                    <a href="{{ url_for('view_logs', username=request.args.get('username', ''), 
+                        start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', ''),
+                        action_type=request.args.get('action_type', ''), show_all=1) }}" 
+                        class="btn btn-secondary">显示全部</a>
+                {% endif %}
+            </div>
+            
+            {% if show_all != '1' and total_pages > 1 %}
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('view_logs', page=page-1, per_page=per_page, username=request.args.get('username', ''),
+                        start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', ''),
+                        action_type=request.args.get('action_type', '')) }}" class="btn btn-secondary">&laquo; 上一页</a>
+                {% endif %}
+                
+                <span class="current-page">第 {{ page }} 页，共 {{ total_pages }} 页</span>
+                
+                {% if page < total_pages %}
+                    <a href="{{ url_for('view_logs', page=page+1, per_page=per_page, username=request.args.get('username', ''),
+                        start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', ''),
+                        action_type=request.args.get('action_type', '')) }}" class="btn btn-secondary">下一页 &raquo;</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html> 

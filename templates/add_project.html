@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目管理 - 添加项目</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="page-container">
+        <h1 class="page-title">项目管理</h1>
+        
+        <div class="action-buttons">
+            <button onclick="window.location.href='/enter_data'" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 返回数据录入
+            </button>
+            <button onclick="addNewProject()" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 添加新项目
+            </button>
+        </div>
+
+        <div class="card">
+            <table class="data-table" id="projects_table">
+                <thead>
+                    <tr>
+                        <th class="project-name-width">项目名称</th>
+                        <th class="date-width">开工日期</th>
+                        <th class="city-width">项目城市</th>
+                        <th class="address-width">项目地址</th>
+                        <th class="developer-width">开发商名称</th>
+                        <th class="area-width">建筑面积</th>
+                        <th class="area-width">计容面积</th>
+                        <th class="area-width">宗地面积</th>
+                        <th class="area-width">绿化面积</th>
+                        <th class="area-width">室外面积</th>
+                        <th class="type-width">项目类型</th>
+                        <th class="version-width">版本</th>
+                        <th class="action-width">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="projects_table_body">
+                    {% for project in projects %}
+                    <tr data-project-id="{{ project.project_id }}" data-version-id="{{ project.version_id }}">
+                        <td><span>{{ project.project_name }}</span><input type="text" name="project_name" value="{{ project.project_name }}" style="display:none;"></td>
+                        <td><span>{{ project.project_date }}</span><input type="date" name="project_date" value="{{ project.project_date }}" style="display:none;"></td>
+                        <td><span>{{ project.project_city }}</span><input type="text" name="project_city" value="{{ project.project_city }}" style="display:none;"></td>
+                        <td><span>{{ project.project_address }}</span><input type="text" name="project_address" value="{{ project.project_address }}" style="display:none;"></td>
+                        <td><span>{{ project.project_developer }}</span><input type="text" name="project_developer" value="{{ project.project_developer }}" style="display:none;"></td>
+                        <td><span>{{ project.project_CFA }}</span><input type="number" name="project_CFA" step="0.01" value="{{ project.project_CFA }}" style="display:none;"></td>
+                        <td><span>{{ project.project_count_area }}</span><input type="number" name="project_count_area" step="0.01" value="{{ project.project_count_area }}" style="display:none;"></td>
+                        <td><span>{{ project.project_land_area }}</span><input type="number" name="project_land_area" step="0.01" value="{{ project.project_land_area }}" style="display:none;"></td>
+                        <td><span>{{ project.project_green_area }}</span><input type="number" name="project_green_area" step="0.01" value="{{ project.project_green_area }}" style="display:none;"></td>
+                        <td><span>{{ project.project_outdoor_area }}</span><input type="number" name="project_outdoor_area" step="0.01" value="{{ project.project_outdoor_area }}" style="display:none;"></td>
+                        <td>
+                            <span>{{ project.prj_type }}</span>
+                            <select name="prj_type" style="display:none;">
+                                <option value="住宅" {% if project.prj_type == '住宅' %}selected{% endif %}>住宅</option>
+                                <option value="商业" {% if project.prj_type == '商业' %}selected{% endif %}>商业</option>
+                                <option value="公寓" {% if project.prj_type == '公寓' %}selected{% endif %}>公寓</option>
+                                <option value="写字楼" {% if project.prj_type == '写字楼' %}selected{% endif %}>写字楼</option>
+                                <option value="产业园" {% if project.prj_type == '产业园' %}selected{% endif %}>产业园</option>
+                                <option value="市政" {% if project.prj_type == '市政' %}selected{% endif %}>市政</option>
+                                <option value="公共建筑" {% if project.prj_type == '公共建筑' %}selected{% endif %}>公共建筑</option>
+                                <option value="其他" {% if project.prj_type == '其他' %}selected{% endif %}>其他</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span>{{ versions_dict[project.version_id|string] }}</span>
+                            <select name="version_id" style="display:none;">
+                                {% for version in versions %}
+                                <option value="{{ version.version_id }}" {% if project.version_id == version.version_id %}selected{% endif %}>{{ version.version_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <button type="button" class="edit_btn" onclick="editProject(this)">修改</button>
+                            <button type="button" class="save_btn" style="display:none;" onclick="saveProject(this)">保存</button>
+                            <button type="button" class="cancel_btn" style="display:none;" onclick="cancelEdit(this)">取消</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function editProject(button) {
+            let row = button.closest('tr');
+            row.querySelectorAll('span').forEach(span => span.style.display = 'none');
+            row.querySelectorAll('input, select').forEach(input => input.style.display = 'block');
+            button.style.display = 'none';
+            row.querySelector('.save_btn').style.display = 'inline';
+            row.querySelector('.cancel_btn').style.display = 'inline';
+        }
+
+        function cancelEdit(button) {
+            let row = button.closest('tr');
+            row.querySelectorAll('span').forEach(span => span.style.display = 'block');
+            row.querySelectorAll('input, select').forEach(input => input.style.display = 'none');
+            row.querySelector('.edit_btn').style.display = 'inline';
+            row.querySelector('.save_btn').style.display = 'none';
+            row.querySelector('.cancel_btn').style.display = 'none';
+        }
+
+        function saveProject(button) {
+            let row = button.closest('tr');
+            let project_id = row.getAttribute('data-project-id');
+            // 获取 version_id 和 version_name
+            let version_id = row.querySelector('select[name="version_id"]').value;
+            let version_name = row.querySelector('select[name="version_id"] option:checked').textContent;
+            let prj_type = row.querySelector('select[name="prj_type"]').value;
+
+            let data = {
+                project_id: project_id,
+                project_name: row.querySelector('input[name="project_name"]').value,
+                project_date: row.querySelector('input[name="project_date"]').value,
+                project_city: row.querySelector('input[name="project_city"]').value,
+                project_address: row.querySelector('input[name="project_address"]').value,
+                project_developer: row.querySelector('input[name="project_developer"]').value,
+                project_CFA: row.querySelector('input[name="project_CFA"]').value,
+                project_count_area: row.querySelector('input[name="project_count_area"]').value,
+                project_land_area: row.querySelector('input[name="project_land_area"]').value,
+                project_green_area: row.querySelector('input[name="project_green_area"]').value,
+                project_outdoor_area: row.querySelector('input[name="project_outdoor_area"]').value,
+                version_id: version_id,
+                prj_type: prj_type
+            };
+
+            fetch(`/update_project`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            }).then(response => response.json()).then(result => {
+                if (result.success) {
+                    row.querySelectorAll('span').forEach((span, index) => {
+                        let value = row.querySelectorAll('input, select')[index].value;
+                        span.textContent = value;
+                    });
+                    row.querySelector('.edit_btn').style.display = 'inline';
+                    row.querySelector('.save_btn').style.display = 'none';
+                    row.querySelector('.cancel_btn').style.display = 'none';
+                } else {
+                    alert('更新失败，请重试。');
+                }
+            });
+        }
+
+        function addNewProject() {
+            let tableBody = document.getElementById('projects_table_body');
+            let newRow = document.createElement('tr');
+
+            newRow.innerHTML = `
+                <td><input type="text" name="project_name"></td>
+                <td><input type="date" name="project_date"></td>
+                <td><input type="text" name="project_city"></td>
+                <td><input type="text" name="project_address"></td>
+                <td><input type="text" name="project_developer"></td>
+                <td><input type="number" name="project_CFA" step="0.01"></td>
+                <td><input type="number" name="project_count_area" step="0.01"></td>
+                <td><input type="number" name="project_land_area" step="0.01"></td>
+                <td><input type="number" name="project_green_area" step="0.01"></td>
+                <td><input type="number" name="project_outdoor_area" step="0.01"></td>
+                <td>
+                    <select name="prj_type">
+                        <option value="住宅">住宅</option>
+                        <option value="商业">商业</option>
+                        <option value="公寓">公寓</option>
+                        <option value="写字楼">写字楼</option>
+                        <option value="产业园">产业园</option>
+                        <option value="市政">市政</option>
+                        <option value="公共建筑">公共建筑</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </td>
+                <td>
+                    <select name="version_id">
+                        {% for version in versions %}
+                        <option value="{{ version.version_id }}">{{ version.version_name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <button onclick="saveNewProject(this)">保存</button>
+                    <button onclick="cancelNewProject(this)">取消</button>
+                </td>
+            `;
+
+            tableBody.appendChild(newRow);
+        }
+
+        function saveNewProject(button) {
+            let row = button.closest('tr');
+            let data = {
+                project_name: row.querySelector('input[name="project_name"]').value,
+                project_date: row.querySelector('input[name="project_date"]').value,
+                project_city: row.querySelector('input[name="project_city"]').value,
+                project_address: row.querySelector('input[name="project_address"]').value,
+                project_developer: row.querySelector('input[name="project_developer"]').value,
+                project_CFA: row.querySelector('input[name="project_CFA"]').value,
+                project_count_area: row.querySelector('input[name="project_count_area"]').value,
+                project_land_area: row.querySelector('input[name="project_land_area"]').value,
+                project_green_area: row.querySelector('input[name="project_green_area"]').value,
+                project_outdoor_area: row.querySelector('input[name="project_outdoor_area"]').value,
+                version_id: row.querySelector('select[name="version_id"]').value,
+                prj_type: row.querySelector('select[name="prj_type"]').value
+            };
+
+            fetch(`/add_project`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            }).then(response => response.json()).then(result => {
+                if (result.success) {
+                    // 重新加载页面以显示新项目
+                    location.reload();
+                } else {
+                    alert('创建失败，请重试。');
+                }
+            });
+        }
+
+        function cancelNewProject(button) {
+            let row = button.closest('tr');
+            row.remove();
+        }
+    </script>
+</body>
+</html>

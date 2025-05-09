@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>添加楼宇信息</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="page-container">
+        <h1 class="page-title">添加楼宇信息</h1>
+        
+        <div class="action-buttons">
+            <button onclick="window.location.href='/enter_data'" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 返回数据录入
+            </button>
+            <button onclick="addNewBuilding()" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 添加新楼宇
+            </button>
+        </div>
+
+        <div class="card">
+            <table class="data-table" id="buildings_table">
+                <thead>
+                    <tr>
+                        <th>楼宇名称</th>
+                        <th>是否为公配</th>
+                        <th>建筑面积（㎡）</th>
+                        <th>计容面积（㎡）</th>
+                        <th>装修面积（㎡）</th>
+                        <th>层数</th>
+                        <th>层高 (m)</th>
+                        <th>交付标准</th>
+                        <th>业态</th>
+                        <th>结构形式</th>
+                        <th>版本</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="buildings_table_body" data-project-id="{{ project_id }}">
+                    {% for building in buildings %}
+                    <tr data-building-id="{{ building.building_id }}" data-project-id="{{ building.project_id }}" data-version-id="{{ building.version_id }}" data-building-name="{{ building.building_name }}">
+                        <td><span>{{ building.building_name }}</span><input type="text" name="building_name" value="{{ building.building_name }}" style="display:none;"></td>
+                        <td>
+                            <span>{% if building.public_facility %}Yes{% else %}No{% endif %}</span>
+                            <select name="public_facility" style="display:none;">
+                                <option value="0" {% if not building.public_facility %}selected{% endif %}>No</option>
+                                <option value="1" {% if building.public_facility %}selected{% endif %}>Yes</option>
+                            </select>
+                        </td>
+                        <td><span>{{ building.building_area }}</span><input type="number" name="building_area" step="0.01" value="{{ building.building_area }}" style="display:none;"></td>
+                        <td><span>{{ building.building_count_area }}</span><input type="number" name="building_count_area" step="0.01" value="{{ building.building_count_area }}" style="display:none;"></td>
+                        <td><span>{{ building.decorated_area }}</span><input type="number" name="decorated_area" step="0.01" value="{{ building.decorated_area }}" style="display:none;"></td>
+                        <td><span>{{ building.floors }}</span><input type="number" name="floors" value="{{ building.floors }}" style="display:none;"></td>
+                        <td><span>{{ building.floor_height }}</span><input type="number" name="floor_height" step="0.01" value="{{ building.floor_height }}" style="display:none;"></td>
+                        <td>
+                            <span>{{ building.decoration_status }}</span>
+                            <select name="decoration_status" style="display:none;">
+                                <option value="毛坯" {% if building.decoration_status == '毛坯' %}selected{% endif %}>毛坯</option>
+                                <option value="精装" {% if building.decoration_status == '精装' %}selected{% endif %}>精装</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span>{{ building.building_type }}</span>
+                            <select name="building_type" style="display:none;">
+                                <option value="厂房" {% if building.building_type == '厂房' %}selected{% endif %}>厂房</option>
+                                <option value="仓库" {% if building.building_type == '仓库' %}selected{% endif %}>仓库</option>
+                                <option value="生产车间" {% if building.building_type == '生产车间' %}selected{% endif %}>生产车间</option>
+                                <option value="宿舍" {% if building.building_type == '宿舍' %}selected{% endif %}>宿舍</option>
+                                <option value="保障房" {% if building.building_type == '保障房' %}selected{% endif %}>保障房</option>
+                                <option value="小高层住宅" {% if building.building_type == '小高层住宅' %}selected{% endif %}>小高层住宅</option>
+                                <option value="高层住宅" {% if building.building_type == '高层住宅' %}selected{% endif %}>高层住宅</option>
+                                <option value="底商" {% if building.building_type == '底商' %}selected{% endif %}>底商</option>
+                                <option value="购物中心" {% if building.building_type == '购物中心' %}selected{% endif %}>购物中心</option>
+                                <option value="酒店" {% if building.building_type == '酒店' %}selected{% endif %}>酒店</option>
+                                <option value="写字楼" {% if building.building_type == '写字楼' %}selected{% endif %}>写字楼</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span>{{ building.building_structure }}</span>
+                            <select name="building_structure" style="display:none;">
+                                <option value="框架" {% if building.building_structure == '框架' %}selected{% endif %}>框架</option>
+                                <option value="框剪" {% if building.building_structure == '框剪' %}selected{% endif %}>框剪</option>
+                                <option value="筒体" {% if building.building_structure == '筒体' %}selected{% endif %}>筒体</option>
+                                <option value="钢结构" {% if building.building_structure == '钢结构' %}selected{% endif %}>钢结构</option>
+                                <option value="砖混" {% if building.building_structure == '砖混' %}selected{% endif %}>砖混</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span>{{ versions_dict[building.version_id] }}</span>
+                            <input type="hidden" name="version_id" value="{{ building.version_id }}">
+                        </td>
+                        <td>
+                            <button type="button" class="edit_btn" onclick="editBuilding(this)">修改</button>
+                            <button type="button" class="save_btn" style="display:none;" onclick="saveBuilding(this)">保存</button>
+                            <button type="button" class="cancel_btn" style="display:none;" onclick="cancelEdit(this)">取消</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const selectedVersionId = "{{ selected_version_id }}"; // 从enter_data页面获取��择的版本id
+        const versionsDict = {{ versions_dict | tojson }};
+
+        function editBuilding(button) {
+            let row = button.closest('tr');
+            row.querySelectorAll('span').forEach(span => span.style.display = 'none');
+            row.querySelectorAll('input, select').forEach(input => input.style.display = 'block');
+            button.style.display = 'none';
+            row.querySelector('.save_btn').style.display = 'inline';
+            row.querySelector('.cancel_btn').style.display = 'inline';
+        }
+
+        function cancelEdit(button) {
+            let row = button.closest('tr');
+            row.querySelectorAll('span').forEach(span => span.style.display = 'block');
+            row.querySelectorAll('input, select').forEach(input => input.style.display = 'none');
+            row.querySelector('.edit_btn').style.display = 'inline';
+            row.querySelector('.save_btn').style.display = 'none';
+            row.querySelector('.cancel_btn').style.display = 'none';
+        }
+
+        function saveBuilding(button) {
+            let row = button.closest('tr');
+            let buildingId = row.getAttribute('data-building-id');
+            let projectId = row.getAttribute('data-project-id');
+            let versionId = row.querySelector('input[name="version_id"]').value;
+            let oldBuildingName = row.getAttribute('data-building-name');  // 获取旧的楼宇名称
+
+            let data = {
+                building_id: buildingId,
+                project_id: projectId,
+                building_name: row.querySelector('input[name="building_name"]').value,
+                public_facility: row.querySelector('select[name="public_facility"]').value,
+                building_area: row.querySelector('input[name="building_area"]').value,
+                decorated_area: row.querySelector('input[name="decorated_area"]').value,
+                building_count_area: row.querySelector('input[name="building_count_area"]').value,
+                floors: row.querySelector('input[name="floors"]').value,
+                floor_height: row.querySelector('input[name="floor_height"]').value,
+                decoration_status: row.querySelector('select[name="decoration_status"]').value,
+                building_type: row.querySelector('select[name="building_type"]').value,
+                building_structure: row.querySelector('select[name="building_structure"]').value,
+                version_id: versionId,
+                old_building_name: oldBuildingName  // 添加旧的楼宇名称
+            };
+
+            fetch(`/update_building/${buildingId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    row.setAttribute('data-building-name', data.building_name);  // 更新 data-building-name 属性
+                    row.querySelectorAll('span').forEach(span => {
+                        let input = span.nextElementSibling;
+                        span.textContent = input.type === 'select-one' ? input.options[input.selectedIndex].text : input.value;
+                        span.style.display = 'block';
+                        input.style.display = 'none';
+                    });
+                    row.querySelector('.edit_btn').style.display = 'inline-block';
+                    row.querySelector('.save_btn').style.display = 'none';
+                    row.querySelector('.cancel_btn').style.display = 'none';
+                } else {
+                    alert('保存失败: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('保存失败，请稍后重试。');
+            });
+        }
+
+        function updateBuildingNameInDatabase(buildingId, newBuildingName) {
+            fetch(`/update_building_name/${buildingId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ building_name: newBuildingName })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (!result.success) {
+                    console.error('楼宇名称更新失败:', result.message);
+                }
+            })
+            .catch(error => {
+                console.error('更新楼宇名称时出错:', error);
+            });
+        }
+
+        function addNewBuilding() {
+            let tableBody = document.getElementById('buildings_table_body');
+            let projectId = tableBody.getAttribute('data-project-id');
+            let newRow = document.createElement('tr');
+            newRow.setAttribute('data-project-id', projectId);
+            newRow.innerHTML = `
+                <td><input type="text" name="building_name" value=""></td>
+                <td>
+                    <select name="public_facility">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </td>
+                <td><input type="number" name="building_area" step="0.01" value="0"></td>
+                <td><input type="number" name="building_count_area" step="0.01" value="0"></td>
+                <td><input type="number" name="decorated_area" step="0.01" value="0"></td>
+                <td><input type="number" name="floors" value="0"></td>
+                <td><input type="number" name="floor_height" step="0.01" value="0"></td>
+                <td>
+                    <select name="decoration_status">
+                        <option value="毛坯">毛坯</option>
+                        <option value="精装">精装</option>
+                    </select>
+                </td>
+                <td>
+                    <select name="building_type">
+                        <option value="厂房">厂房</option>
+                        <option value="仓库">仓库</option>
+                        <option value="生产车间">生产车间</option>
+                        <option value="宿舍">宿舍</option>
+                        <option value="保障房">保障房</option>
+                        <option value="小高层住宅">小高层住宅</option>
+                        <option value="高层住宅">高层住宅</option>
+                        <option value="底商">底商</option>
+                        <option value="购物中心">购物中心</option>
+                        <option value="酒店">酒店</option>
+                        <option value="写字楼">写字楼</option>
+                    </select>
+                </td>
+                <td>
+                    <select name="building_structure">
+                        <option value="框架">框架</option>
+                        <option value="框剪">框剪</option>
+                        <option value="筒体">筒体</option>
+                        <option value="钢结构">钢结构</option>
+                        <option value="砖混">砖混</option>
+                    </select>
+                </td>
+                <td><span>${versionsDict[selectedVersionId]}</span><input type="hidden" name="version_id" value="${selectedVersionId}"></td>
+                <td>
+                    <button type="button" class="save_btn" onclick="saveNewBuilding(this)">保存</button>
+                    <button type="button" class="cancel_btn" onclick="cancelNewBuilding(this)">取消</button>
+                </td>
+            `;
+            tableBody.appendChild(newRow);
+        }
+
+        function saveNewBuilding(button) {
+            let row = button.closest('tr');
+            let tableBody = document.getElementById('buildings_table_body');
+            let projectId = tableBody.getAttribute('data-project-id');
+            let versionId = row.querySelector('input[name="version_id"]').value;
+            let newBuildingName = row.querySelector('input[name="building_name"]').value;
+
+            let data = {
+                project_id: projectId,
+                building_name: newBuildingName,
+                public_facility: row.querySelector('select[name="public_facility"]').value,
+                building_area: row.querySelector('input[name="building_area"]').value,
+                building_count_area: row.querySelector('input[name="building_count_area"]').value,
+                decorated_area: row.querySelector('input[name="decorated_area"]').value,
+                floors: row.querySelector('input[name="floors"]').value,
+                floor_height: row.querySelector('input[name="floor_height"]').value,
+                decoration_status: row.querySelector('select[name="decoration_status"]').value,
+                building_type: row.querySelector('select[name="building_type"]').value,
+                building_structure: row.querySelector('select[name="building_structure"]').value,
+                version_id: versionId
+            };
+
+            fetch(`/add_building/${projectId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    row.remove();
+                    let tbody = document.getElementById('buildings_table_body');
+                    let newRow = document.createElement('tr');
+                    newRow.setAttribute('data-building-id', result.building_id); // 使用服务器返回的新楼宇ID
+                    newRow.setAttribute('data-project-id', data.project_id);
+                    newRow.setAttribute('data-version-id', data.version_id);
+                    newRow.setAttribute('data-building-name', data.building_name);
+                    newRow.innerHTML = `
+                        <td><span>${data.building_name}</span><input type="text" name="building_name" value="${data.building_name}" style="display:none;"></td>
+                        <td>
+                            <span>${data.public_facility === "1" ? "Yes" : "No"}</span>
+                            <select name="public_facility" style="display:none;">
+                                <option value="0" ${data.public_facility === "0" ? "selected" : ""}>No</option>
+                                <option value="1" ${data.public_facility === "1" ? "selected" : ""}>Yes</option>
+                            </select>
+                        </td>
+                        <td><span>${data.building_area}</span><input type="number" name="building_area" step="0.01" value="${data.building_area}" style="display:none;"></td>
+                        <td><span>${data.building_count_area}</span><input type="number" name="building_count_area" step="0.01" value="${data.building_count_area}" style="display:none;"></td>
+                        <td><span>${data.decorated_area}</span><input type="number" name="decorated_area" step="0.01" value="${data.decorated_area}" style="display:none;"></td>
+                        <td><span>${data.floors}</span><input type="number" name="floors" value="${data.floors}" style="display:none;"></td>
+                        <td><span>${data.floor_height}</span><input type="number" name="floor_height" step="0.01" value="${data.floor_height}" style="display:none;"></td>
+                        <td>
+                            <span>${data.decoration_status}</span>
+                            <select name="decoration_status" style="display:none;">
+                                <option value="毛坯" ${data.decoration_status === "毛坯" ? "selected" : ""}>毛坯</option>
+                                <option value="精装" ${data.decoration_status === "精装" ? "selected" : ""}>精装</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span>${data.building_type}</span>
+                            <select name="building_type" style="display:none;">
+                                <option value="厂房" ${data.building_type === "厂房" ? "selected" : ""}>厂房</option>
+                                <option value="仓库" ${data.building_type === "仓库" ? "selected" : ""}>仓库</option>
+                                <option value="生产车间" ${data.building_type === "生产车间" ? "selected" : ""}>生产车间</option>
+                                <option value="宿舍" ${data.building_type === "宿舍" ? "selected" : ""}>宿舍</option>
+                                <option value="保障房" ${data.building_type === "保障房" ? "selected" : ""}>保障房</option>
+                                <option value="小高层住宅" ${data.building_type === "小高层住宅" ? "selected" : ""}>小高层住宅</option>
+                                <option value="高层住宅" ${data.building_type === "高层住宅" ? "selected" : ""}>高层住宅</option>
+                                <option value="底商" ${data.building_type === "底商" ? "selected" : ""}>底商</option>
+                                <option value="购物中心" ${data.building_type === "购物中心" ? "selected" : ""}>购物中心</option>
+                                <option value="酒店" ${data.building_type === "酒店" ? "selected" : ""}>酒店</option>
+                                <option value="写字楼" ${data.building_type === "写字楼" ? "selected" : ""}>写字楼</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span>${data.building_structure}</span>
+                            <select name="building_structure" style="display:none;">
+                                <option value="框架" ${data.building_structure === "框架" ? "selected" : ""}>框架</option>
+                                <option value="框剪" ${data.building_structure === "框剪" ? "selected" : ""}>框剪</option>
+                                <option value="筒体" ${data.building_structure === "筒体" ? "selected" : ""}>筒体</option>
+                                <option value="钢结构" ${data.building_structure === "钢结构" ? "selected" : ""}>钢结构</option>
+                                <option value="砖混" ${data.building_structure === "砖混" ? "selected" : ""}>砖混</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span>${versionsDict[data.version_id]}</span>
+                            <input type="hidden" name="version_id" value="${data.version_id}">
+                        </td>
+                        <td>
+                            <button type="button" class="edit_btn" onclick="editBuilding(this)">修改</button>
+                            <button type="button" class="save_btn" style="display:none;" onclick="saveBuilding(this)">保存</button>
+                            <button type="button" class="cancel_btn" style="display:none;" onclick="cancelEdit(this)">取消</button>
+                        </td>
+                    `;
+                    tbody.appendChild(newRow);
+                } else {
+                    alert('保存失败: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('保存失败，请稍后重试。');
+            });
+        }
+
+        function cancelNewBuilding(button) {
+            let row = button.closest('tr');
+            row.remove();
+        }
+    </script>
+</body>
+</html>

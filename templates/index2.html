@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>合同交底系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* 保持新的布局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #1f1f1f;
+            line-height: 1.5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 256px;
+            background: #001529;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 1000;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.3) transparent;
+        }
+
+        .sidebar-logo {
+            height: 64px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            background: #002140;
+        }
+
+        .sidebar-logo h1 {
+            color: white;
+            font-size: 18px;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 16px 0;
+        }
+
+        .sidebar li a {
+            padding: 12px 24px;
+            color: rgba(255, 255, 255, 0.65);
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar li a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #1890ff;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar li a:hover::after,
+        .sidebar li a.active::after {
+            transform: scaleX(1);
+        }
+
+        .main-container {
+            flex: 1;
+            margin-left: 256px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .main-header {
+            height: 64px;
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,21,41,.08);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 999;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: #f0f2f5;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        /* 保留原有的表单样式 */
+        .input-group-full {
+            width: 100%;
+            max-width: 100%;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .input-group-full label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-control::placeholder {
+            color: #9ca3af;
+        }
+
+        .form-control.has-value {
+            color: #000000;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+            outline: none;
+            animation: focusIn 0.3s ease;
+        }
+
+        @keyframes focusIn {
+            0% { transform: scale(0.98); }
+            70% { transform: scale(1.01); }
+            100% { transform: scale(1); }
+        }
+
+        /* 其他原有样式... */
+
+        /* 金额输入相关样式 */
+        .professional-amounts {
+            margin-top: 20px;
+        }
+
+        .amounts-container {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .add-btn {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #40a9ff;
+        }
+
+        .remove-building-btn {
+            background: #ff4d4f;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .remove-building-btn:hover {
+            background: #ff7875;
+        }
+
+        /* 复选框组样式 */
+        .brand-selection-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* 建筑范围相关样式 */
+        .building-scopes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .building-header {
+            margin-bottom: 16px;
+        }
+
+        .building-name-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* 金额输入区域样式优化 */
+        .project-amounts {
+            margin-top: 20px;
+        }
+
+        .project-amounts h4 {
+            font-size: 16px;
+            color: #1f1f1f;
+            margin-bottom: 12px;
+        }
+
+        /* 输入框组样式优化 */
+        .input-group-full {
+            margin-bottom: 16px;
+        }
+
+        .input-group-full label {
+            color: #1f1f1f;
+            font-weight: 500;
+        }
+
+        /* 按钮样式优化 */
+        .btn-primary {
+            min-width: 120px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+
+        /* 表单操作区域样式 */
+        .form-actions {
+            display: flex;
+            justify-content: center;
+            padding: 24px 0 0;
+        }
+
+        /* 修复一些间距问题 */
+        .content-card {
+            margin-bottom: 24px;
+        }
+
+        .subsection {
+            margin-bottom: 32px;
+        }
+
+        .subsection:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 表单验证样式 */
+        .invalid {
+            border-color: #ff4d4f !important;
+            background-color: #fff2f0;
+        }
+
+        .invalid:focus {
+            box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2) !important;
+        }
+
+        /* 滚动条样式优化 */
+        .main-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .main-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* 表单项hover效果 */
+        .form-control:hover {
+            border-color: #40a9ff;
+        }
+
+        /* 按钮loading状态 */
+        .btn-primary:disabled {
+            background-color: #1890ff80;
+            cursor: not-allowed;
+        }
+
+        /* 导航栏滚动样式 */
+        .sidebar {
+            /* 已有样式保持不变 */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.3) transparent;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 2px;
+        }
+
+        /* 导航项动画效果 */
+        .sidebar li a {
+            /* 已有样式保持不变 */
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar li a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #1890ff;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar li a:hover::after,
+        .sidebar li a.active::after {
+            transform: scaleX(1);
+        }
+
+        /* 表单验证错误提示 */
+        .form-control.invalid {
+            border-color: #ff4d4f;
+            animation: shake 0.5s;
+        }
+
+        .error-message {
+            color: #ff4d4f;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .invalid + .error-message {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* 按钮动画效果 */
+        .btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        .btn:active::after {
+            width: 200px;
+            height: 200px;
+        }
+
+        /* 卡片hover效果 */
+        .content-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        /* 输入框focus动画 */
+        .form-control:focus {
+            /* 已有样式保持不变 */
+            animation: focusIn 0.3s ease;
+        }
+
+        @keyframes focusIn {
+            0% { transform: scale(0.98); }
+            70% { transform: scale(1.01); }
+            100% { transform: scale(1); }
+        }
+
+        /* 优化平滑滚动，修复位置偏移问题 */
+        .smooth-scroll {
+            position: relative;
+            top: 0;
+            left: 0;
+            transition: top 0.3s ease, left 0.3s ease;
+        }
+
+        /* 优化错误提示动画 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        .error-message {
+            color: #ff4d4f;
+            font-size: 12px;
+            margin-top: 4px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .error-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 优化按钮水波纹效果 */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.7);
+            transform: scale(0);
+            animation: ripple-effect 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-effect {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* 优化提交按钮loading状态 */
+        .btn.loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-left: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 优化滚动条样式 */
+        .main-content::-webkit-scrollbar-track {
+            background-color: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+            background-color: #888;
+            border-radius: 10px;
+            border: 2px solid #f5f5f5;
+        }
+
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background-color: #555;
+        }
+
+        /* 消息提示样式 */
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.success {
+            background-color: #52c41a;
+        }
+
+        .message.error {
+            background-color: #ff4d4f;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 验证消息样式 */
+        .validation-message {
+            font-size: 12px;
+            margin-top: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .validation-message.error {
+            color: #ff4d4f;
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+        }
+
+        .validation-message.success {
+            color: #52c41a;
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+        }
+
+        /* 提交反馈样式 */
+        .submit-feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .submit-feedback.show {
+            transform: translateX(0);
+        }
+
+        .submit-feedback.success {
+            background-color: #52c41a;
+        }
+
+        .submit-feedback.error {
+            background-color: #ff4d4f;
+        }
+
+        /* 按钮水波纹效果优化 */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-effect 0.6s linear;
+            background-color: rgba(255, 255, 255, 0.7);
+            pointer-events: none;
+        }
+
+        @keyframes ripple-effect {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* 表单控件focus状态优化 */
+        .form-control:focus {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24,144,255,0.2);
+            outline: none;
+        }
+
+        /* 导航栏滚动优化 */
+        .sidebar {
+            scroll-behavior: smooth;
+        }
+
+        .sidebar a.active {
+            position: relative;
+            background-color: rgba(24,144,255,0.1);
+        }
+
+        .sidebar a.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: #1890ff;
+        }
+
+        /* 金额输入相关样式优化 */
+        .amounts-container {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .amount-input,
+        .project-amount-input {
+            text-align: right;
+            padding-right: 24px;
+        }
+
+        .amount-input::after,
+        .project-amount-input::after {
+            content: '万元';
+            position: absolute;
+            right: 8px;
+            color: #999;
+        }
+
+        /* 删除按钮样式优化 */
+        .add-btn[onclick*="remove"] {
+            background-color: #ff4d4f;
+        }
+
+        .add-btn[onclick*="remove"]:hover {
+            background-color: #ff7875;
+        }
+
+        /* 输入框样式 */
+        input[type="text"], textarea {
+            color: #999; /* 默认为灰色 */
+        }
+        
+        input[type="text"].user-input, 
+        textarea.user-input {
+            color: #000 !important; /* 用户输入的内容为黑色 */
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <h1>合同交底系统</h1>
+            </div>
+            <ul>
+                <li><a href="#contract_overview" class="active">
+                    <span>一、项目及合同概述</span>
+                </a></li>
+                <li><a href="#payment_settlement">
+                    <span>二、工程款支付及结算</span>
+                </a></li>
+                <li><a href="#change_management">
+                    <span>三、变更签证管理</span>
+                </a></li>
+                <li><a href="#pricing_exceptions">
+                    <span>四、清单和合同中需注意的特殊计价原则</span>
+                </a></li>
+                <li><a href="#material_brands">
+                    <span>五、材料品牌的约定及选取原则</span>
+                </a></li>
+                <li><a href="#employer_notes">
+                    <span>六、发包人工作中需要注意的事项</span>
+                </a></li>
+                <li><a href="#measure_fees">
+                    <span>七、措施费的有关特殊情况说明</span>
+                </a></li>
+            </ul>
+        </aside>
+
+        <!-- 主内容区 -->
+        <div class="main-container">
+            <header class="main-header">
+                <h1>工程合同交底系统</h1>
+            </header>
+
+            <main class="main-content">
+                <form id="contractForm">
+                    <div class="content-card">
+                        <section id="contract_overview">
+                            <h2>一、项目及合同概述</h2>
+                            <div class="section-content">
+                                <!-- 1. 项目概况 -->
+                                <div class="subsection">
+                                    <h3>1. 项目概况</h3>
+                                    <div class="input-group-full">
+                                        <label>项目名称：</label>
+                                        <input type="text" name="project_name" class="form-control" required placeholder="深汕工业互联网">
+                                        <div class="error-message">请输入项目名称</div>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>项目业态：</label>
+                                        <select name="project_type" class="form-control">
+                                            <option value="产业园">产业园</option>
+                                            <option value="住宅">住宅</option>
+                                            <option value="写字楼">写字楼</option>
+                                            <option value="商业">商业</option>
+                                            <option value="市政道路">市政道路</option>
+                                            <option value="高速公路">高速公路</option>
+                                            <option value="土地开发">土地开发</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>项目建设规模：</label>
+                                        <input type="text" name="project_scale" class="form-control" 
+                                               placeholder="项目总建筑面积25万平米/项目为市政道路，道路里程35KM">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>项目总投资：</label>
+                                        <input type="text" 
+                                               name="project_investment" 
+                                               class="form-control editable" 
+                                               value="20000万元" 
+                                               data-default="20000万元"
+                                               readonly>
+                                    </div>
+                                </div>
+
+                                <!-- 2. 合同概况 -->
+                                <div class="subsection">
+                                    <h3>2. 合同概况</h3>
+                                    <div class="input-group-full">
+                                        <label>合同名称：</label>
+                                        <input type="text" name="contract_name" class="form-control editable" 
+                                               value="深汕工业互联网一期施工总承包" 
+                                               data-default="深汕工业互联网一期施工总承包"
+                                               onkeydown="handleEnterKey(event, this)">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>甲方：</label>
+                                        <input type="text" name="party_a" class="form-control" 
+                                               placeholder="XXX公司">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>乙方：</label>
+                                        <input type="text" name="party_b" class="form-control" 
+                                               placeholder="XXX公司">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>工期：</label>
+                                        <div class="date-range" style="display: flex; align-items: center; gap: 10px;">
+                                            <input type="date" name="start_date" class="form-control" style="width: auto;" onchange="calculateDays()">
+                                            <span>至</span>
+                                            <input type="date" name="end_date" class="form-control" style="width: auto;" onchange="calculateDays()">
+                                            <span>，共</span>
+                                            <input type="text" name="total_days" class="form-control" style="width: 60px;" readonly>
+                                            <span>日历天</span>
+                                        </div>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>承发包模式：</label>
+                                        <select name="contract_model" class="form-control">
+                                            <option value="平行承发包模式">平行承发包模式</option>
+                                            <option value="总承包模式">总承包模式</option>
+                                            <option value="其他">其他</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>合同计价形式：</label>
+                                        <select name="pricing_form" class="form-control">
+                                            <option value="固定单价">固定单价</option>
+                                            <option value="固定总价">固定总价</option>
+                                            <option value="可调单价">可调单价</option>
+                                            <option value="成本加成">成本加成</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>工程规模：</label>
+                                        <input type="text" name="project_size" class="form-control" 
+                                               placeholder="建筑面积**平米/道路**KM">
+                                    </div>
+                                </div>
+
+                                <!-- 3. 合同承包范围（工程实体及专业） -->
+                                <div class="subsection">
+                                    <h3>3. 合同承包范围（工程实体及专业）</h3>
+                                    <div id="buildings-container">
+                                        <button type="button" class="add-btn" onclick="addBuilding()">添加单项工程</button>
+                                        <div id="building-list"></div>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>室外配套：</label>
+                                        <input type="text" name="outdoor_facilities" class="form-control" 
+                                               placeholder="室外道路,室外给排水,景观照明,景观给排水,室外电气,室外燃气,高压外线,其他室外土建工程(化粪池、水池、隔油池、小区围墙等),景观绿化工程,标识工程,标线工程">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>红线外：</label>
+                                        <input type="text" name="outside_redline" class="form-control" 
+                                               placeholder="红外大市政,红线景观工程,红线外道路工程,市政配套给排水工程,市政配套电力工程,市政配套通信工程,市政配套燃气工程,市政配套交通监控工程,市政配套迁改工程,给排水工程迁改,电力工程迁改,通信工程迁改,国防通信工程迁改,燃气工程迁改,交通监控工程迁改">
+                                    </div>
+                                </div>
+
+                                <!-- 4. 合同总金额及构成 -->
+                                <div class="subsection">
+                                    <h3>4. 合同总金额及构成</h3>
+                                    <div class="input-group-full" style="display: flex; align-items: center; gap: 10px;">
+                                        <label>签约合同金额：</label>
+                                        <input type="text" name="contract_amount" class="form-control" style="width: 120px;" placeholder="**万元">
+                                        <label>，其中安全文明措施费：</label>
+                                        <input type="text" name="safety_fee" class="form-control short-input" style="width: 120px;" placeholder="**万元">
+                                    </div>
+
+                                    <!-- 按专业分项金额情况 -->
+                                    <div class="professional-amounts">
+                                        <h4>按专业分项金额情况：</h4>
+                                        <div class="amounts-container" id="professional-amounts">
+                                            <!-- 已添加的金额列表容器 -->
+                                            <div id="added-amounts"></div>
+                                            
+                                            <!-- 输入控件组 -->
+                                            <div class="input-group-full" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                                                <select id="amount-type" class="form-control" style="width: 200px;">
+                                                    <option value="">请选择专业</option>
+                                                    <option value="slope_support">边坡支护及地基处理</option>
+                                                    <option value="foundation_pit">基坑土石方及基坑支护工程</option>
+                                                    <option value="pile_foundation">桩基础工程</option>
+                                                    <option value="foundation_earthwork">基础土石方</option>
+                                                    <option value="main_structure">主体结构工程</option>
+                                                    <option value="doors_windows">门窗</option>
+                                                    <option value="roof_waterproof">屋面及防水</option>
+                                                    <option value="rough_decoration">粗装修</option>
+                                                    <option value="fine_decoration">精装修</option>
+                                                    <option value="civil_defense">人防筑工程</option>
+                                                    <option value="curtain_wall">幕墙工程</option>
+                                                    <option value="steel_structure">钢构工程</option>
+                                                    <option value="power_distribution">高低压变配电系统</option>
+                                                    <option value="power_monitoring">电力监控系统</option>
+                                                    <option value="power_system">动力系统</option>
+                                                    <option value="lighting">照明系统</option>
+                                                    <option value="lightning_protection">防雷接地系统</option>
+                                                    <option value="charging_pile">充电桩系统</option>
+                                                    <option value="water_supply">给排水工程</option>
+                                                    <option value="hvac">通风空调工程</option>
+                                                    <option value="intelligent_system">智能化工程</option>
+                                                    <option value="fire_protection">消防工程</option>
+                                                    <option value="civil_defense_installation">人防安装工程</option>
+                                                    <option value="indoor_gas">室内燃气工程</option>
+                                                    <option value="support_bracket">支吊架工程</option>
+                                                    <option value="fine_electrical">精装电气工程</option>
+                                                    <option value="fine_plumbing">精装给排水工程</option>
+                                                    <option value="fine_hvac">精装通风空调工程</option>
+                                                    <option value="flood_lighting">泛光照明工程</option>
+                                                    <option value="sewage_treatment">污水处理工程</option>
+                                                    <option value="rainwater_recycling">雨水回收工程</option>
+                                                    <option value="solar_water_heater">太阳能热水器工程</option>
+                                                    <option value="elevator">电梯工程</option>
+                                                </select>
+                                                <input type="text" class="form-control amount-input" placeholder="输入金额（万元）" style="width: 130px;">
+                                                <button type="button" class="add-btn" onclick="addAmount()">添加</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 单项工程分项金额情况 -->
+                                    <div class="project-amounts">
+                                        <h4>单项工程分项金额情况：</h4>
+                                        <div class="amounts-container" id="project-amounts">
+                                            <!-- 已添加的金额表容器 -->
+                                            <div id="added-project-amounts"></div>
+                                            
+                                            <!-- 输入控件组 -->
+                                            <div class="input-group-full" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                                                <select id="project-name" class="form-control" style="width: 200px;">
+                                                    <option value="">请选择单项工程</option>
+                                                    <!-- 这里的选项将通过JavaScript动态填充 -->
+                                                </select>
+                                                <input type="text" class="form-control project-amount-input" placeholder="输入金额（万元）" style="width: 130px;">
+                                                <button type="button" class="add-btn" onclick="addProjectAmount()">添加</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    
+                    <!-- 二、工程款支付及结算 -->
+                    <div class="content-card">
+                        <section id="payment_settlement">
+                            <h2>二、工程款支付及结算</h2>
+                            <div class="section-content">
+                                <!-- 1. 付款进度和条件 -->
+                                <div class="subsection">
+                                    <h3>1. 付款进度和条件</h3>
+                                    <div class="input-group-full">
+                                        <label>预付款：</label>
+                                        <textarea name="advance_payment" class="form-control" 
+                                            placeholder="**后支付**%预付款"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>进度款：</label>
+                                        <textarea name="progress_payment" class="form-control" 
+                                            placeholder="每月按照完成产值支付*%进度款，验收完成后支付*%"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>预付款扣回：</label>
+                                        <textarea name="advance_deduction" class="form-control" 
+                                            placeholder="每支付合同金额的1%，扣回预付款的3%"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>质保金额：</label>
+                                        <textarea name="warranty_amount" class="form-control" 
+                                            placeholder="质保金为结算金额的*%，质保期*年"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>结算尾款支付：</label>
+                                        <textarea name="final_payment" class="form-control" 
+                                            placeholder="结算完成后支付剩余尾"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>质保金支付：</label>
+                                        <textarea name="warranty_payment" class="form-control" 
+                                            placeholder="缺陷责任期满后，根据缺陷责任终止证书，扣除维保责任扣款后支付剩余质保金（不计利息）"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 2. 合同结算前提条件 -->
+                                <div class="subsection">
+                                    <h3>2. 合同结算前提条件</h3>
+                                    <div class="input-group-full">
+                                        <textarea name="settlement_condition_1" class="form-control" 
+                                            placeholder="按照合同规定的内容完成全部工程"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <textarea name="settlement_condition_2" class="form-control" 
+                                            placeholder="工程必须经过相关部门验收，质量合格"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <textarea name="settlement_condition_3" class="form-control" 
+                                            placeholder="符合合同要求：工程竣工结算必须符合合同规定的要求，包括所有增减变更内容，确保结算的合法性和准确性"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <textarea name="settlement_condition_4" class="form-control" 
+                                            placeholder="竣工收报告被批准，取得竣工验收合格报告"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <textarea name="settlement_condition_5" class="form-control" 
+                                            placeholder="其他相关手续办理完毕：包括施工图预算编制完毕、设计变更和现场变更手续办理完毕、经济索赔得到业主认可等"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <textarea name="settlement_condition_6" class="form-control" 
+                                            placeholder="提交完整的算资料：包括施工合同、工程竣工图纸及资料、双方确认的工程量、双方确认追加(减)的合同价格、双方确认的索赔和现场签证事项及价款、招标文件、投标文件、工程量清单报价单或施工图预算书等与竣工结算有关的资料"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- 三、变更签证管理 -->
+                    <div class="content-card">
+                        <section id="change_management">
+                            <h2>三、变更签证管理</h2>
+                            <div class="section-content">
+                                <!-- 1. 变更签证程序 -->
+                                <div class="subsection">
+                                    <h3>1. 变更签证程序</h3>
+                                    <div class="input-group-full">
+                                        <label>事前审批-发起部门：</label>
+                                        <textarea name="initiating_department" class="form-control" 
+                                            placeholder="签证-项目部/变更-设计部"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>事前审批-审批要点：</label>
+                                        <textarea name="approval_points" class="form-control" 
+                                            placeholder="发起部门要对变更签证的必要性做清晰阐述，并且是不属于原合同范围内充分的分析说明。成本管理部费用估算要有计算过程。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>指令下发：</label>
+                                        <textarea name="instruction_issuance" class="form-control" 
+                                            placeholder="项目部负责指令下发，同时注意编号不要重复。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>完工确认：</label>
+                                        <textarea name="completion_confirmation" class="form-control" 
+                                            placeholder="工程师、监理、施工单位对完工情况进行确认如与图纸不符应在图纸上标注清楚，并多方共同认可。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>费用申报：</label>
+                                        <textarea name="cost_declaration" class="form-control" 
+                                            placeholder="完工确认后，承包人及时根据相关资料，送费用申报。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>费用审批：</label>
+                                        <textarea name="cost_approval" class="form-control" 
+                                            placeholder="成本管理部负责进行费用审核，与承包人达成一致意见后，按照制度及权限发起费用审批。"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 2. 变更成本控制 -->
+                                <div class="subsection">
+                                    <h3>2. 变更成本控制</h3>
+                                    <div class="input-group-full">
+                                        <textarea name="change_cost_control" class="form-control" rows="4" 
+                                            placeholder="设计阶段应该充分考虑，尽量减少变更出现..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- 四、清单和合同中需注意的特殊计价原则 -->
+                    <div class="content-card">
+                        <section id="pricing_exceptions">
+                            <h2>四、清单和合同中需注意的特殊计价原则</h2>
+                            <div class="section-content">
+                                <div class="subsection">
+                                    <h3>1. 合同清单中需要注意的特殊计价原则</h3>
+                                    <div class="input-group-full">
+                                        <label>土方开挖：</label>
+                                        <input type="text" name="earth_excavation" class="form-control" placeholder="请输入土方开挖的特殊计价原则">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>石方开挖：</label>
+                                        <input type="text" name="rock_excavation" class="form-control" placeholder="请输入石方开挖的特殊计价原则">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>回填方：</label>
+                                        <input type="text" name="backfill" class="form-control" 
+                                            placeholder="因为地体缺方，外部调运或者购买的土石方用于回填的'回填方'清单计取了'从外面运土的运费'和'购买土方资源'；场内转运的不予。">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>石方静力爆破：</label>
+                                        <input type="text" name="rock_blasting" class="form-control" 
+                                            placeholder="一般区域，次坚石/普坚石/特坚石及以上的石方应采用静力爆破行施工；但**特殊区域，次坚实/普坚石以上的石方根据设计图要求采用静力爆破。">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>冲孔灌注桩入岩：</label>
+                                        <input type="text" name="pile_rock_penetration" class="form-control" 
+                                            placeholder="入岩深度工程量根**确定">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>石方资源回收：</label>
+                                        <input type="text" name="rock_resource_recovery" class="form-control" 
+                                            placeholder="松石、次坚石、普坚石、特坚石是否回收，回收比例及风险约定。">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>土方外运：</label>
+                                        <input type="text" name="earth_transport" class="form-control" 
+                                            placeholder="运距按照8KM包干。">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>石方外运：</label>
+                                        <input type="text" name="rock_transport" class="form-control" 
+                                            placeholder="运距按照8KM干。">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>渣土车要求：</label>
+                                        <input type="text" name="dump_truck" class="form-control" 
+                                            placeholder="是|否要求为柴油密闭车，该约定在合同P*页有关'渣土车车型'的相关内容进行约定，未在项目特征描述上体现">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>土石方结算工程量确认原则：</label>
+                                        <input type="text" name="earthwork_settlement" class="form-control" 
+                                            placeholder="勘察报告/设计图/联">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>地下室防水：</label>
+                                        <input type="text" name="basement_waterproof" class="form-control" placeholder="请输入地下室防的特殊计价原则">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>外墙防水：</label>
+                                        <input type="text" name="external_wall_waterproof" class="form-control" placeholder="请输入外墙防水的特殊计价原则">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>玻璃幕墙：</label>
+                                        <input type="text" name="glass_curtain_wall" class="form-control" 
+                                            placeholder="骨架含量约定，面板更的价原则">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>地面找平：</label>
+                                        <input type="text" name="floor_leveling" class="form-control" 
+                                            placeholder="建还是精装负责，不要与粘贴层混淆了，注意找平、铺装及粘结层与层高的关系">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>拆除工程：</label>
+                                        <input type="text" name="demolition" class="form-control" 
+                                            placeholder="拆除**钢筋混凝土结构/**路面/**临电设备的残值是/否冲抵了工程款，成本人能/不能自行处置拆除回收残值。">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>灌注桩充盈系数：</label>
+                                        <input type="text" name="pile_filling_coefficient" class="form-control" placeholder="请输入灌注桩充盈系数的特殊计价原则">
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>临电设备拆除时残值回收处置：</label>
+                                        <input type="text" name="temp_equipment_disposal" class="form-control" placeholder="请输入临电设备拆除时残值回收处置的说明">
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- 五、材料品牌的约定及选取原则 -->
+                    <div class="content-card">
+                        <section id="material_brands">
+                            <h2>五、材料品牌的约定及选取原则</h2>
+                            <div class="section-content">
+                                <!-- 1. 材料品牌选用原则 -->
+                                <div class="subsection">
+                                    <h3>1. 材料品牌选用原则</h3>
+                                    <div class="input-group-full">
+                                        <label>选用范围：</label>
+                                        <div class="brand-selection-options">
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" name="brand_range[]" value="公品牌">
+                                                <span>公司品牌库</span>
+                                            </label>
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" name="brand_range[]" value="区工务署品牌库">
+                                                <span>区工务署品牌库</span>
+                                            </label>
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" name="brand_range[]" value="市工务署品牌库">
+                                                <span>市工务署品牌库</span>
+                                            </label>
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" name="brand_range[]" value="地产30强品牌库">
+                                                <span>地产30强品牌库</span>
+                                            </label>
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" name="brand_range[]" value="其他">
+                                                <span>其他</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>档次：</label>
+                                        <input type="text" name="brand_level" class="form-control" 
+                                               placeholder="A区**档以上，B区**档以上">
+                                    </div>
+                                </div>
+
+                                <!-- 2. 材料品牌确认程序 -->
+                                <div class="subsection">
+                                    <h3>2. 材料品牌确认程序</h3>
+                                    <div class="input-group">
+                                        <label>库内品牌确认程序：</label>
+                                        <textarea name="in_library_confirmation" class="form-control"></textarea>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>库外品牌确认流程：</label>
+                                        <textarea name="out_library_confirmation" class="form-control"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- 六、发包人工作中需要注意的事项 -->
+                    <div class="content-card">
+                        <section id="employer_notes">
+                            <h2>六、发包人工作中需要注意的事项</h2>
+                            <div class="section-content">
+                                <div class="input-group">
+                                    <label>水的接驳地点：</label>
+                                    <textarea name="water_connection" class="form-control"></textarea>
+                                </div>
+                                <div class="input-group">
+                                    <label>电的接驳地点：</label>
+                                    <textarea name="electricity_connection" class="form-control"></textarea>
+                                </div>
+                                <div class="input-group">
+                                    <label>通讯的接驳地点：</label>
+                                    <textarea name="communication_connection" class="form-control"></textarea>
+                                </div>
+                                <div class="input-group">
+                                    <label>场外临时道路：</label>
+                                    <textarea name="temp_road" class="form-control"></textarea>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- 七、措施费的有关特殊情况说明 -->
+                    <div class="content-card">
+                        <section id="measure_fees">
+                            <h2>七、措施费的有关特殊情况说明</h2>
+                            <div class="section-content">
+                                <!-- 1. 总价措施费包干的有关合同约束 -->
+                                <div class="subsection">
+                                    <h3>1. 总价措施费包干的有关合同约束</h3>
+                                    <div class="input-group-full">
+                                        <label>塔吊基础费用：</label>
+                                        <textarea name="total_measure_fee_1" class="form-control" 
+                                            placeholder="塔吊基随塔吊费用总价包干，除非塔吊数量变化，不应塔吊基础工程量化而调整。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>安全明措施费：</label>
+                                        <textarea name="total_measure_fee_2" class="form-control" 
+                                            placeholder="安全明措施在原施组方案不变情况下总价包干，应追加工程或者变更签证而导致分部分项工程费总金额超过签约合同金额分部分项工程费总金额的5%以上时，超过部分按照计价规范计算他、调整安全文明措施费。"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 2. 单价措施费的有关特殊说明 -->
+                                <div class="subsection">
+                                    <h3>2. 单价措施费的有关特殊说明</h3>
+                                    <div class="input-group-full">
+                                        <label>模板工程：</label>
+                                        <textarea name="template_engineering" class="form-control" 
+                                            placeholder="模板工程费用按实际使用面积计算，但需注意特殊部位（如异形构件、高大模板等）的计价方式。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>脚手架工程：</label>
+                                        <textarea name="scaffold_engineering" class="form-control" 
+                                            placeholder="脚手架费用按搭设面积计算，但要考虑到搭设高度、使用时间等因素的影响。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>临时措施：</label>
+                                        <textarea name="temporary_facilities" class="form-control" 
+                                            placeholder="临时设施费用（如临时道路、临时供水供电等）按实际发生计算，但要注与总价措施费中已包含项目的区分。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>冬雨季施工措施：</label>
+                                        <textarea name="seasonal_measures" class="form-control" 
+                                            placeholder="根据实际气候条件和施工时间，可能需要额外的防寒、防雨措，这些费用应按实际发生计算。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>垂直运输措施：</label>
+                                        <textarea name="vertical_transport" class="form-control" 
+                                            placeholder="塔吊、施工电梯等垂直运输设备的费用通常按数和使用间计算但要意与总价措施费中包含项目区分。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>施工降���措施：</label>
+                                        <textarea name="dewatering_measures" class="form-control" 
+                                            placeholder="地下水位较高的项目可能需要额外的降水措施，些费用应根实际情况计算。"></textarea>
+                                    </div>
+                                    <div class="input-group-full">
+                                        <label>特殊施工措施：</label>
+                                        <textarea name="special_measures" class="form-control" 
+                                            placeholder="如高空作业、水下作业等特殊工条件下的措施费用，应根据际情况单独计算。"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- 修改提交按钮 -->
+                    <div class="content-actions">
+                        <button type="button" class="submit-btn" id="generate-doc" onclick="generateDocument()">生成合同交底文档</button>
+                    </div>
+                </form>
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        // 定义分部工程列表
+        const subProjects = [
+            '边坡支护及地基处理工程', '基坑土石方及基坑支护工程', '桩基础工程', '基础土石方工程', 
+            '主体结构工程', '门窗工程', '屋面及防水工程', '粗装修工程', '精装修工程', '人防建筑工程', 
+            '幕墙工程', '钢结构工程', '高低压变配电系统工程', '电力监控系统工程', '动力系统工程', 
+            '照明系统工程', '防雷接地系统工程', '充电桩系统工程', '给排水工程', '通风空调工程', 
+            '智能化工程', '消防工程', '人防安装工程', '室内燃气工程', '支吊架工程', '精装电气工程', 
+            '精装给排水工程', '精装通风空调工程', '泛光照明工程', '污水处理工程', '雨水回收工程', 
+            '太阳能热水器工程', '电梯工程'
+        ];
+
+        function addBuilding() {
+            // 弹出输入框要求用户输入单项工程名称
+            const buildingName = prompt('请输入单项工程名称：');
+            if (!buildingName) return; // 如果用户取消或未输入，则返回
+
+            // 创建新的单项工程容器
+            const buildingContainer = document.createElement('div');
+            buildingContainer.className = 'building-item';
+            buildingContainer.style.marginBottom = '20px';
+            buildingContainer.style.padding = '15px';
+            buildingContainer.style.border = '1px solid #e8e8e8';
+            buildingContainer.style.borderRadius = '4px';
+
+            // 添加单项工程名称
+            const nameHeader = document.createElement('h4');
+            nameHeader.textContent = buildingName;
+            nameHeader.style.marginBottom = '15px';
+            buildingContainer.appendChild(nameHeader);
+
+            // 创建分部工程选择区域
+            const subProjectsContainer = document.createElement('div');
+            subProjectsContainer.style.display = 'grid';
+            subProjectsContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
+            subProjectsContainer.style.gap = '10px';
+
+            // 添加所有分部工程选项
+            subProjects.forEach(subProject => {
+                const checkboxContainer = document.createElement('div');
+                checkboxContainer.style.display = 'flex';
+                checkboxContainer.style.alignItems = 'center';
+                checkboxContainer.style.gap = '8px';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = `subproject_${buildingName}_${subProject}`;
+                checkbox.value = subProject;
+
+                const label = document.createElement('label');
+                label.textContent = subProject;
+                label.style.fontSize = '14px';
+
+                checkboxContainer.appendChild(checkbox);
+                checkboxContainer.appendChild(label);
+                subProjectsContainer.appendChild(checkboxContainer);
+            });
+
+            buildingContainer.appendChild(subProjectsContainer);
+
+            // 添加删除按钮
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = '删除';
+            deleteButton.className = 'remove-building-btn';
+            deleteButton.style.marginTop = '15px';
+            deleteButton.onclick = function() {
+                buildingContainer.remove();
+            };
+            buildingContainer.appendChild(deleteButton);
+
+            // 将新的单项工程添加到列表中
+            document.getElementById('building-list').appendChild(buildingContainer);
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input[type="text"], textarea');
+            
+            inputs.forEach(input => {
+                // 保存默认值
+                if (!input.dataset.placeholder) {
+                    input.dataset.placeholder = input.value || input.placeholder;
+                    if (input.dataset.placeholder) {
+                        input.value = input.dataset.placeholder;
+                    }
+                }
+
+                input.addEventListener('focus', function() {
+                    // 将光标移到末尾
+                    this.setSelectionRange(this.value.length, this.value.length);
+                });
+
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        
+                        if (e.shiftKey && this.tagName.toLowerCase() === 'textarea') {
+                            // Shift+Enter: 插入换行
+                            const pos = this.selectionStart;
+                            this.value = this.value.slice(0, pos) + '\n' + this.value.slice(this.selectionEnd);
+                            this.setSelectionRange(pos + 1, pos + 1);
+                        } else {
+                            // 普通Enter: 将当前内容作为用户输入
+                            this.classList.add('user-input');
+                            
+                            // 找到下一个输入框并聚焦
+                            const allInputs = Array.from(inputs);
+                            const currentIndex = allInputs.indexOf(this);
+                            if (currentIndex < allInputs.length - 1) {
+                                allInputs[currentIndex + 1].focus();
+                            }
+                        }
+                    }
+                });
+
+                input.addEventListener('blur', function() {
+                    if (!this.value) {
+                        this.value = this.dataset.placeholder;
+                        this.classList.remove('user-input');
+                    }
+                });
+            });
+        });
+        
+        // 日期计算功能
+        function calculateDays() {
+            const startDate = document.querySelector('input[name="start_date"]').value;
+            const endDate = document.querySelector('input[name="end_date"]').value;
+            const totalDaysInput = document.querySelector('input[name="total_days"]');
+
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+
+                if (start > end) {
+                    alert('开始日期不能大于结束日期');
+                    document.querySelector('input[name="end_date"]').value = '';
+                    totalDaysInput.value = '';
+                    return;
+                }
+
+                const diffTime = Math.abs(end - start);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                totalDaysInput.value = diffDays;
+            } else {
+                totalDaysInput.value = '';
+            }
+        }
+
+        // 为日期输入框添加事件监听
+        const startDateInput = document.querySelector('input[name="start_date"]');
+        const endDateInput = document.querySelector('input[name="end_date"]');
+        
+        if (startDateInput) startDateInput.addEventListener('change', calculateDays);
+        if (endDateInput) endDateInput.addEventListener('change', calculateDays);
+    </script>
+</body>
+</html>
