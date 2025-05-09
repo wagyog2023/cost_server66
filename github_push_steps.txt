@@ -1,0 +1,45 @@
+# GitHub推送步骤
+
+已经在GitHub上创建好了"cost_server66"仓库，网址：https://github.com/wagyog2023/cost_server66
+
+请按照以下步骤将本地代码推送到GitHub：
+
+## 步骤一：确保Git已正确配置
+
+```bash
+# 设置用户名和邮箱
+git config --global user.name "wagyog2023"
+git config --global user.email "您的邮箱地址"
+```
+
+## 步骤二：获取GitHub上的更改
+
+```bash
+# 拉取远程仓库信息
+git fetch origin
+
+# 合并更改（如有必要）
+git merge origin/main --allow-unrelated-histories
+```
+
+## 步骤三：解决冲突（如有）
+
+如果有合并冲突，请解决它们，然后：
+
+```bash
+git add .
+git commit -m "解决冲突"
+```
+
+## 步骤四：推送到GitHub
+
+```bash
+# 推送到主分支
+git push -u origin main
+```
+
+## 常见问题
+
+- 如果遇到认证问题，可以使用GitHub令牌或SSH密钥进行认证
+- 如果是网络问题，请确保能够正常访问GitHub网站
+- 对于大文件（>100MB），建议使用Git LFS或从.gitignore中排除 
