@@ -187,6 +187,74 @@ def enter_data():
 
     return render_template('enter_data.html', projects=projects, versions=versions)
 
+@app.route('/get_versions/<project_id>')
+@log_user_action('查询版本信息', '版本管理')
+def get_versions(project_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT v.version_id, v.version_name
+        FROM versions v
+        JOIN projects p ON p.version_id = v.version_id
+        WHERE p.project_id = %s
+    """, (project_id,))
+    versions = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(versions=versions)
+
+@app.route('/add_project', methods=['GET', 'POST'])
+@log_user_action('添加项目', '项目管理')
+def add_project():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        project_data = request.json
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                INSERT INTO projects (project_name, project_date, project_city, project_address,
+                project_developer, project_CFA, project_count_area, project_land_area,
+                project_green_area, project_outdoor_area, prj_type, version_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                project_data['project_name'], project_data['project_date'],
+                project_data['project_city'], project_data['project_address'],
+                project_data['project_developer'], float(project_data['project_CFA']),
+                float(project_data['project_count_area']), float(project_data['project_land_area']),
+                float(project_data['project_green_area']), float(project_data['project_outdoor_area']),
+                project_data['prj_type'], int(project_data['version_id'])
+            ))
+            new_project_id = cursor.lastrowid
+
+            # 调用存储过程更新成本指标基数
+            cursor.callproc('compute_cost_categories', [new_project_id])
+            conn.commit()
+            return jsonify(success=True)
+        except mysql.connector.Error as err:
+            conn.rollback()
+            return jsonify(success=False, message=str(err))
+        finally:
+            cursor.close()
+            conn.close()
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # 获取版本列表
+    cursor.execute("SELECT version_id, version_name FROM versions")
+    versions = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template('add_project.html', versions=versions)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -258,6 +326,68 @@ def log_system_event(username, action_type, module_name, event_detail):
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
+@app.route('/view_logs')
+def view_logs():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    if not has_log_access(session['username']):
+        flash('您没有权限查看日志')
+        return redirect(url_for('index'))
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("""
+        SELECT * FROM user_logs
+        ORDER BY access_time DESC
+        LIMIT 500
+    """)
+    logs = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('view_logs.html', logs=logs)
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@log_user_action('修改密码', '用户管理')
+def change_password():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        current_password = request.form['current_password']
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+        
+        if new_password != confirm_password:
+            flash('新密码和确认密码不匹配')
+            return redirect(url_for('change_password'))
+        
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("SELECT * FROM users WHERE username = %s", (session['username'],))
+        user = cursor.fetchone()
+        
+        if not check_password_hash(user['password'], current_password):
+            flash('当前密码不正确')
+            return redirect(url_for('change_password'))
+        
+        new_password_hash = generate_password_hash(new_password)
+        cursor.execute("UPDATE users SET password = %s WHERE username = %s", 
+                      (new_password_hash, session['username']))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        flash('密码修改成功')
+        return redirect(url_for('index'))
+    
+    return render_template('change_password.html')
 
 if __name__ == '__main__':
     setup_logging()
